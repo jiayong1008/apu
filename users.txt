@@ -1,0 +1,11 @@
+limjiayong, jiayong, customer, lim@apu.com, 011-23456789
+leanneooi, apple123, customer, leanne@apu.com, 011-73524538
+harrypotter, 123, customer, potter@hogwarts.com, 017-47295923
+ronweasley, 123, customer, ron@hogwarts.com, 016-57294729
+adminjiayong, admin123, admin, adminjy@gmail.com, 012-54629134
+adminleanne, admin123, admin, adleanne@gmail.com, 016-55973293
+AmandaChong, Aamanda, customer, amandasoong@gmail.com, 011-02993822
+linda, lindalin, customer, linda@gmail.com, 016-29921001
+Esther, estheryip11, customer, estheryip22@gmail.com, 011-29382019
+Christian, christianT, customer, christian@gmail.com, 018-29307566
+LennonLim, lennonlennon, customer, lennon123@gmail.com, 019-28773645
