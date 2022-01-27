@@ -4,7 +4,7 @@ Contains projects or assignments which I have completed during my Diploma study 
 1. **Online Car Rental System** 🚗    
 **Description**: A simple Python program which allows customer to book cars for rent, online.        
 **Language**: Python    
-:point_right: **[View More](https://github.com/jiayong1008/apu/python/car-rental-system)**
+:point_right: **[View More](https://github.com/jiayong1008/apu/tree/python/car-rental-system)**
    
 3. **Java Project**    
 **Description**: *Not Implemented yet*        
