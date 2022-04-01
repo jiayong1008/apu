@@ -1489,8 +1489,8 @@ public class MainFrame extends javax.swing.JFrame {
     private void addTableRow(DefaultTableModel model, Booking booking) {
         row[0] = booking.getBookingID();
         row[1] = booking.getRoomID();
-        row[2] = booking.getUserID();
-        row[3] = User.getCustName(booking.getUserID());
+        row[2] = booking.getUser().getUserID();
+        row[3] = booking.getUser().getName();
         row[4] = booking.getCheckInDate();
         row[5] = booking.getCheckOutDate();
         model.addRow(row);
@@ -1520,8 +1520,8 @@ public class MainFrame extends javax.swing.JFrame {
             booking = bookings.get(i);
             row[0]= booking.getBookingID();
             row[1]= booking.getRoomID();
-            row[2]= booking.getUserID();
-            row[3]= User.getCustName(booking.getUserID());
+            row[2]= booking.getUser().getUserID();
+            row[3]= booking.getUser().getName();
             row[4]= booking.getCheckInDate();
             row[5]= booking.getCheckOutDate();
             row[6] = booking.getBookingDate();
@@ -1640,12 +1640,12 @@ public class MainFrame extends javax.swing.JFrame {
         txtAreaReceipt.setText(txtAreaReceipt.getText() + "  *******************************************\n");
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("\t %s \n\n", booking.getBookingDate()));
 
-        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Guest Name:\t\t%s\n", User.getCustName(booking.getUserID())));
-        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Guest ID:\t\t%d\n", booking.getUserID()));
+        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Guest Name:\t\t%s\n", booking.getUser().getName()));
+        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Guest ID:\t\t%d\n", booking.getUser().getUserID()));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Room ID:\t\t%s\n", booking.getRoomID()));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Check In Date:\t%s\n", booking.getCheckInDate()));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Check Out Date:\t%s\n", booking.getCheckOutDate()));
-        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Days of Stay:\t\t%s\n", booking.getRoomID()));
+        txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Days of Stay:\t\t%d\n", booking.getDaysOfStay()));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Price per Night:\tRM%d.00\n", ResortBooking.getPrice()));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Subtotal:\t\tRM%.2f\n", subtotal));
         txtAreaReceipt.setText(txtAreaReceipt.getText() + String.format("  Service Tax (10%%):\tRM%.2f\n", serviceTax));
@@ -1678,6 +1678,39 @@ public class MainFrame extends javax.swing.JFrame {
         // Iterate bookings 1 by 1 and check if its available,  
         // remove from the copied arraylist if not available
         for (Booking booking : bookings) {
+            try {
+                Date checkIn = datef.parse(booking.getCheckInDate());
+                Date checkOut = datef.parse(booking.getCheckOutDate());
+                Date reqCheckIn = datef.parse(chkInDate); // requested check in date
+                Date reqCheckOut = datef.parse(chkOutDate); // requested check out date
+                
+                if (!availableRooms.contains(booking.getRoomID()) || reqCheckIn.compareTo(checkOut) >= 0 ||
+                    reqCheckOut.compareTo(checkIn) <= 0) // Last 2 conditions denote room is still available
+                    continue;
+                else if (reqCheckIn.compareTo(checkOut) < 0 && reqCheckOut.compareTo(checkIn) >= 0)
+                    availableRooms.remove(booking.getRoomID());
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return availableRooms;
+    }
+    
+    private ArrayList<String> getAvailableRooms(Booking bookingIn) { // Overloading
+        // Deepcopy rooms arraylist
+        ArrayList<String> rooms = ResortBooking.getRooms();
+        ArrayList<String> availableRooms = new ArrayList<String>();
+        ArrayList<Booking> bookings = ResortBooking.getBookings();
+        for (String room : rooms) {
+            availableRooms.add(room);
+        }
+        
+        // Iterate bookings 1 by 1 and check if its available,  
+        // remove from the copied arraylist if not available
+        for (Booking booking : bookings) {
+            if (booking == bookingIn)
+                continue;
             try {
                 Date checkIn = datef.parse(booking.getCheckInDate());
                 Date checkOut = datef.parse(booking.getCheckOutDate());
@@ -1850,9 +1883,11 @@ public class MainFrame extends javax.swing.JFrame {
             }
 
             if (!user.isDuplicate()) {
-                user.addToFile();
-                loadUsers();
-                JOptionPane.showMessageDialog(this, "User added successfully");
+                if (user.addToFile()) {
+                    loadUsers();
+                    JOptionPane.showMessageDialog(this, "User added successfully");
+                } else
+                    JOptionPane.showMessageDialog(this, "User not added - Something went wrong.");
             } else {
                 user = null; // Deleting it (by making it eligible for garbage collection)
                 JOptionPane.showMessageDialog(this, "User not added - Duplication detected.");
@@ -1886,9 +1921,11 @@ public class MainFrame extends javax.swing.JFrame {
 
             for (User user : users) {
                 if (user.getUserID() == userID) {
-                    user.updateInfo(name, contact, email, ic);
-                    JOptionPane.showMessageDialog(this, "User updated successfully.");
-                    break;
+                    if (user.updateInfo(name, contact, email, ic)) {
+                        JOptionPane.showMessageDialog(this, "User updated successfully.");
+                        break;
+                    } else
+                        JOptionPane.showMessageDialog(this, "User update failed - something went wrong.");
                 }
             }
         }
@@ -1917,14 +1954,17 @@ public class MainFrame extends javax.swing.JFrame {
                         ResortBooking.getStaffs().remove(user);
                     else
                         ResortBooking.getCusts().remove(user);
-                    User.rewriteFile();
-                    tableModel.removeRow(row);
-                    txtUserFullName.setText("");
-                    txtContact.setText("");
-                    txtEmail.setText("");
-                    txtNric.setText("");
-                    txtUsername.setText("");
-                    JOptionPane.showMessageDialog(this, "User deleted successfully.");
+                    
+                    if (User.rewriteFile()) {
+                        tableModel.removeRow(row);
+                        txtUserFullName.setText("");
+                        txtContact.setText("");
+                        txtEmail.setText("");
+                        txtNric.setText("");
+                        txtUsername.setText("");
+                        JOptionPane.showMessageDialog(this, "User deleted successfully.");
+                    } else
+                        JOptionPane.showMessageDialog(this, "User deletion failed - something went wrong.");
                     break;
                 }
             }
@@ -1970,8 +2010,12 @@ public class MainFrame extends javax.swing.JFrame {
             Collections.addAll(bookingInfo, "-1", String.valueOf(guestID), bookRoomID, chkInDate, chkOutDate, today);
             Booking booking = new Booking(bookingInfo);
             if (!booking.isDuplicate()) {
-                booking.addToFile();
-                JOptionPane.showMessageDialog(this, "Booking successful.");
+                if (booking.addToFile())
+                    JOptionPane.showMessageDialog(this, "Booking successful.");
+                else {
+                    booking = null;
+                    JOptionPane.showMessageDialog(this, "Booking failed - Something went wrong.");
+                }
             } else {
                 booking = null; // Deleting it (by making it eligible for garbage collection)
                 JOptionPane.showMessageDialog(this, "Booking denied - Duplicate booking detected.");
@@ -2050,26 +2094,26 @@ public class MainFrame extends javax.swing.JFrame {
 
                 // User only inputs name without giving date
                 if (strCheckIn.isEmpty() && strCheckOut.isEmpty() &&  
-                    User.getCustName(booking.getUserID()).toLowerCase().contains(name)) {
+                    User.getCustName(booking.getUser().getUserID()).toLowerCase().contains(name)) {
                     addTableRow(tableModel, booking); // Add to table
                 } 
                 else if (!strCheckIn.isEmpty() && !strCheckOut.isEmpty() && 
                     (checkIn.compareTo(searchCheckIn) >= 0) && (checkOut.compareTo(searchCheckOut) <= 0)) {
                     // check in and out dates meet condition
                     if (name.isEmpty() || (!name.isEmpty() && 
-                        User.getCustName(booking.getUserID()).toLowerCase().contains(name)))
+                        User.getCustName(booking.getUser().getUserID()).toLowerCase().contains(name)))
                         addTableRow(tableModel, booking); // Add to table
                 }
                 else if (strCheckIn.isEmpty() && !strCheckOut.isEmpty() && (checkOut.compareTo(searchCheckOut) <= 0)) {
                     // only check out date is provided
                     if (name.isEmpty() || (!name.isEmpty() && 
-                        User.getCustName(booking.getUserID()).toLowerCase().contains(name)))
+                        User.getCustName(booking.getUser().getUserID()).toLowerCase().contains(name)))
                         addTableRow(tableModel, booking); // Add to table 
                 }
                 else if (strCheckOut.isEmpty() && strCheckIn.isEmpty() && (checkIn.compareTo(searchCheckIn) >= 0)) {
                     // only check in date is provided
                     if (name.isEmpty() || (!name.isEmpty() && 
-                        User.getCustName(booking.getUserID()).toLowerCase().contains(name)))
+                        User.getCustName(booking.getUser().getUserID()).toLowerCase().contains(name)))
                         addTableRow(tableModel, booking); // Add to table
                 }
             }
@@ -2087,17 +2131,12 @@ public class MainFrame extends javax.swing.JFrame {
         } else {
             if (validateBookingDates()) {
                 String room = (String) tableModel.getValueAt(row, 1);
-                ArrayList<String> availableRooms = getAvailableRooms();
+                Booking currentBooking = Booking.getBooking((Integer) tableModel.getValueAt(row, 0));
+                ArrayList<String> availableRooms = getAvailableRooms(currentBooking);
                 if (availableRooms.contains(room)) {
-                    // passed all validations - save to edit
-                    int bookingID = (int) tableModel.getValueAt(row, 0);
-                    for (Booking booking : ResortBooking.getBookings()) {
-                        if (booking.getBookingID() == bookingID) {
-                            booking.updateInfo(chkInDate, chkOutDate);
-                            JOptionPane.showMessageDialog(this, "Booking info successfully updated.");
-                            break;
-                        }
-                    }
+                    // passed all validations - approve edit
+                    currentBooking.updateInfo(chkInDate, chkOutDate);
+                    JOptionPane.showMessageDialog(this, "Booking info successfully updated.");
                 } else {
                     JOptionPane.showMessageDialog(this, String.format("Room %s is not available for the given dates.", room));
                 }
@@ -2116,15 +2155,17 @@ public class MainFrame extends javax.swing.JFrame {
 
             for (Booking booking : ResortBooking.getBookings()) {
                 if (booking.getBookingID() == bookingID) {
-                    ResortBooking.getBookings().remove(booking);
-                    Booking.rewriteFile();
-                    tableModel.removeRow(row);
-                    lblMngBookingID.setText("N/A");
-                    txtMngCheckIn.setText("");
-                    txtMngCheckOut.setText("");
-                    chkInDate = "";
-                    chkOutDate = "";
-                    JOptionPane.showMessageDialog(this, "Booking record deleted successfully.");
+                    if (Booking.rewriteFile()) {
+                        ResortBooking.getBookings().remove(booking);
+                        tableModel.removeRow(row);
+                        lblMngBookingID.setText("N/A");
+                        txtMngCheckIn.setText("");
+                        txtMngCheckOut.setText("");
+                        chkInDate = "";
+                        chkOutDate = "";
+                        JOptionPane.showMessageDialog(this, "Booking record deleted successfully.");
+                    } else
+                        JOptionPane.showMessageDialog(this, "Booking deletion failed - something went wrong.");
                     break;
                 }
             }

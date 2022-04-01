@@ -32,7 +32,7 @@ public class Staff extends User {
     }    
 
     // Add this user instance to database (users.txt)
-    public void addToFile() {
+    public boolean addToFile() {
         String line;
         try {
             // May throw FileNotFoundException
@@ -45,11 +45,13 @@ public class Staff extends User {
             pw.close();
             // Add to ResortBooking's 'staffs' ArrayList
             ResortBooking.addStaffs(this);
+            return true;
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("User file does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Oops..something went wrong.");
         }
+        return false;
     }
 
     public boolean isDuplicate() {

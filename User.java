@@ -54,7 +54,7 @@ public class User {
     }
 
     // Add this user instance to database (users.txt)
-    public void addToFile() {
+    public boolean addToFile() {
         String line;
         try {
             // May throw FileNotFoundException
@@ -67,16 +67,17 @@ public class User {
             pw.close();
             // Add to ResortBooking's 'customers' ArrayList
             ResortBooking.addUsers(this);
+            return true;
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("User file does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Oops..something went wrong.");
         }
+        return false;
     }
 
     public boolean isDuplicate() {
         ArrayList<User> customers = ResortBooking.getCusts();
-        System.out.println(ic);
         for (User cust : customers) {
             // User duplication is trigerred when they have the same IC
             if (cust.getIC().equals(ic)) {
@@ -87,15 +88,15 @@ public class User {
         return false;
     }
 
-    public void updateInfo(String name, String contact, String email, String ic) {
+    public boolean updateInfo(String name, String contact, String email, String ic) {
         setName(name);
         setContact(contact);
         setEmail(email);
         setIC(ic);
-        rewriteFile();
+        return rewriteFile();
     }
 
-    public static void rewriteFile() {
+    public static boolean rewriteFile() {
         String line;
         try {
             // May throw FileNotFoundException
@@ -117,19 +118,29 @@ public class User {
                 pw.write(line);
             }
             pw.close();
+            return true;
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("User file does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Oops..something went wrong.");
         }
+        return false;
+    }
+
+    public static User getUser(int custID) {
+        for (User user : ResortBooking.getCusts()) {
+            if (user.getUserID() == custID)
+                return user;
+        }
+        return null;
     }
 
     public static String getCustName(int custID) {
-        for (User user : ResortBooking.getCusts()) {
-            if (user.getUserID() == custID)
-                return user.getName();
-        }
-        return "";
+        User cust = getUser(custID);
+        if (cust != null)
+            return cust.getName();
+        else
+            return null;
     }
 }

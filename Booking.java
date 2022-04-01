@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class Booking {
     
     private final int bookingID;
-    private int userID;
+    private User user; // Composition relationship with User
     private String roomID;
     private String checkInDate;
     private String checkOutDate;
@@ -27,7 +27,7 @@ public class Booking {
         int tmpID = Integer.parseInt(bookingInfo.get(0));
         // assign ID manually if not provided
         bookingID = (tmpID >= 0) ? tmpID : id;
-        userID = Integer.parseInt(bookingInfo.get(1));
+        user = User.getUser(Integer.parseInt(bookingInfo.get(1)));
         roomID = bookingInfo.get(2);
         checkInDate = bookingInfo.get(3);
         checkOutDate = bookingInfo.get(4);
@@ -40,7 +40,7 @@ public class Booking {
 
     // GETTERS
     public int getBookingID() { return bookingID; };
-    public int getUserID() { return userID; };
+    public User getUser() { return user; };
     public String getRoomID() { return roomID; };
     public String getCheckInDate() { return checkInDate; };
     public String getCheckOutDate() { return checkOutDate; };
@@ -56,7 +56,7 @@ public class Booking {
     }
 
     // SETTERS
-    public void setUserID(int id) { userID = id; };
+    public void setUser(User _user) { user = _user; };
     public void setRoomID(String id) { roomID = id; };
     public void setCheckInDate(String date) { checkInDate = date; };
     public void setCheckOutDate(String date) { checkOutDate = date; };
@@ -92,7 +92,7 @@ public class Booking {
     public boolean isDuplicate() {
         ArrayList<Booking> bookings = ResortBooking.getBookings();
         for (Booking booking : bookings) {
-            if (booking.getUserID() == userID && booking.getRoomID().equals(roomID) &&
+            if (booking.getUser() == user && booking.getRoomID().equals(roomID) &&
                 booking.getCheckInDate() == checkInDate && booking.getCheckOutDate() == checkOutDate) {
                 id--;
                 return true;
@@ -102,7 +102,7 @@ public class Booking {
     }
 
     // Add this booking instance to database (bookings.txt)
-    public void addToFile() {
+    public boolean addToFile() {
         String line;
         try {
             // May throw FileNotFoundException
@@ -111,26 +111,29 @@ public class Booking {
             Calendar calendar = Calendar.getInstance();
             String today = datef.format(calendar.getTime());
             
-            line = String.format("%d, %d, %s, %s, %s, %s\n", bookingID, userID, 
+            line = String.format("%d, %d, %s, %s, %s, %s\n", bookingID, user.getUserID(), 
                                     roomID, checkInDate, checkOutDate, today);
             pw.write(line);
             pw.close();
             // Add to ResortBooking's 'bookings' ArrayList
             ResortBooking.addBookings(this);
+            return true;
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("Booking file does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Oops..something went wrong.");
         }
+        return false;
     }
 
     public void updateInfo(String checkIn, String checkOut) {
-        setCheckInDate(checkOut);
+        setCheckInDate(checkIn);
         setCheckOutDate(checkOut);
         rewriteFile();
     }
 
-    public static void rewriteFile() {
+    // STATIC FUNCTIONS
+    public static boolean rewriteFile() {
         String line;
         try {
             // May throw FileNotFoundException
@@ -139,16 +142,19 @@ public class Booking {
             pw.write("bookingID, userID, roomID, checkInDate, checkOutDate, bookingDate\n");
             
             for (Booking booking : ResortBooking.getBookings()) {
-                line = String.format("%d, %d, %s, %s, %s, %s\n", booking.getBookingID(), booking.getUserID(), 
-                                        booking.getRoomID(), booking.getCheckInDate(), 
-                                        booking.getCheckOutDate(), booking.getBookingDate());
+                line = String.format("%d, %d, %s, %s, %s, %s\n", booking.getBookingID(),  
+                                booking.user.getUserID(), booking.getRoomID(), booking.getCheckInDate(), 
+                                booking.getCheckOutDate(), booking.getBookingDate());
                 pw.write(line);
             }
             pw.close();
+            return true;
+
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("User file does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Oops..something went wrong.");
         }
+        return false;
     }
 }
