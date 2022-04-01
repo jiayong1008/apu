@@ -1,7 +1,7 @@
 # Resort Room Booking System    
 A stand-alone GUI application used by resort staff to simulate resort room booking. 
 
-![Resort Room Booking System](https://github.com/jiayong1008/apu/blob/java/resort-room/gui.png?raw=true)
+![Resort Room Booking System](https://github.com/jiayong1008/apu/blob/java/resort-booking/gui.png)
 
 ## Specifications
 This project has been implemented purely with Java (interface built with Java Swing). The system will simulate room booking in a week for a small resort with two views (Jungle & Sea), with each view consist of 10 rooms. The charges per room is RM350.00 per night. The system will be used by resort staff. Laid out as below are the list of specifications in this project:
